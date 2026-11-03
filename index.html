@@ -379,6 +379,15 @@
                             Administradora: Liz Sánchez
                         </span>
                     </li>
+                    <li class="nav-item ms-lg-3">
+                        <button class="btn btn-sm btn-light me-1" onclick="exportarDatos()" title="Descargar respaldo de los datos">
+                            <i class="fas fa-download me-1"></i>Respaldar
+                        </button>
+                        <button class="btn btn-sm btn-outline-light" onclick="document.getElementById('archivoRespaldo').click()" title="Restaurar desde un respaldo">
+                            <i class="fas fa-upload me-1"></i>Restaurar
+                        </button>
+                        <input type="file" id="archivoRespaldo" accept="application/json,.json" class="d-none" onchange="importarDatos(this)">
+                    </li>
                 </ul>
             </div>
         </div>
@@ -555,6 +564,7 @@
                                         <th>Teléfono</th>
                                         <th>Email</th>
                                         <th>Última Cita</th>
+                                        <th>Historial de citas</th>
                                         <th>Acciones</th>
                                     </tr>
                                 </thead>
@@ -994,7 +1004,7 @@
                 <div class="modal-header">
                     <h5 class="modal-title">
                         <i class="fas fa-calendar-plus me-2"></i>
-                        Agendar Nueva Cita
+                        <span id="tituloCitaModal">Agendar Nueva Cita</span>
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
@@ -1043,7 +1053,7 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                     <button type="button" class="btn btn-primary" onclick="guardarCita()">
-                        <i class="fas fa-save me-2"></i>Agendar Cita
+                        <i class="fas fa-save me-2"></i><span id="btnTextoCita">Agendar Cita</span>
                     </button>
                 </div>
             </div>
@@ -1057,7 +1067,7 @@
                 <div class="modal-header">
                     <h5 class="modal-title">
                         <i class="fas fa-user-plus me-2"></i>
-                        Nuevo Cliente
+                        <span id="tituloClienteModal">Nuevo Cliente</span>
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
@@ -1080,7 +1090,7 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                     <button type="button" class="btn btn-primary" onclick="guardarCliente()">
-                        <i class="fas fa-save me-2"></i>Guardar Cliente
+                        <i class="fas fa-save me-2"></i><span id="btnTextoCliente">Guardar Cliente</span>
                     </button>
                 </div>
             </div>
@@ -1094,7 +1104,7 @@
                 <div class="modal-header">
                     <h5 class="modal-title">
                         <i class="fas fa-plus me-2"></i>
-                        Nuevo Servicio
+                        <span id="tituloServicioModal">Nuevo Servicio</span>
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
@@ -1127,7 +1137,47 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                     <button type="button" class="btn btn-primary" onclick="guardarServicio()">
-                        <i class="fas fa-save me-2"></i>Guardar Servicio
+                        <i class="fas fa-save me-2"></i><span id="btnTextoServicio">Guardar Servicio</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Eliminar cita: ¿qué pasó con ella? -->
+    <div class="modal fade" id="estadoCitaModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-trash me-2"></i>Eliminar cita</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="fw-semibold mb-2" id="textoEstadoCita"></p>
+                    <p class="mb-0">¿Qué pasó con esta cita? Se guardará en el historial del cliente.</p>
+                </div>
+                <div class="modal-footer flex-wrap">
+                    <button type="button" class="btn btn-success" onclick="confirmarEliminarCita('atendida')"><i class="fas fa-check me-1"></i>Ya fue atendida</button>
+                    <button type="button" class="btn btn-danger" onclick="confirmarEliminarCita('cancelada')"><i class="fas fa-ban me-1"></i>Cliente canceló</button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="confirmarEliminarCita('error')">Fue un error, no registrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Citas del día -->
+    <div class="modal fade" id="diaModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-calendar-day me-2"></i><span id="tituloDiaModal">Citas del día</span></h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="listaDia"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-primary" id="btnAgregarDia" onclick="agregarCitaEnDia()">
+                        <i class="fas fa-plus me-2"></i>Agregar cita este día
                     </button>
                 </div>
             </div>
@@ -1159,7 +1209,7 @@
 
         let servicios = [
             {id: 1, nombre: "Corte y Peinado", duracion: 60, precio: 45.00, descripcion: "Corte personalizado y peinado profesional"},
-            {id: 2, nombre: "Manicure", duracion: 150, precio: 45.00, descripcion: "Manicure completo con esmaltado"},
+            {id: 2, nombre: "Manicure", duracion: 45, precio: 25.00, descripcion: "Manicure completo con esmaltado"},
             {id: 3, nombre: "Pedicure", duracion: 60, precio: 35.00, descripcion: "Pedicure completo con esmaltado"},
             {id: 4, nombre: "Tratamiento Capilar", duracion: 90, precio: 80.00, descripcion: "Tratamiento hidratante capilar profundo"},
             {id: 5, nombre: "Maquillaje", duracion: 45, precio: 50.00, descripcion: "Maquillaje profesional para eventos"},
@@ -1177,6 +1227,42 @@
             {id: 8, clienteId: 3, servicioId: 6, fecha: "2025-08-07", hora: "13:00", estado: "confirmada", observaciones: ""}
         ];
 
+        // Persistencia local (los datos se conservan al cerrar o recargar la página)
+        const CLAVE_DATOS = 'pareli_datos_v1';
+        let clienteEditandoId = null;
+        let servicioEditandoId = null;
+        let citaEditandoId = null;
+
+        try {
+            const guardado = JSON.parse(localStorage.getItem(CLAVE_DATOS));
+            if (guardado && Array.isArray(guardado.clientes) && Array.isArray(guardado.servicios) && Array.isArray(guardado.citas)) {
+                clientes = guardado.clientes;
+                servicios = guardado.servicios;
+                citas = guardado.citas;
+            }
+        } catch (e) { console.warn('No se pudieron leer los datos guardados', e); }
+
+        function persistir() {
+            try {
+                localStorage.setItem(CLAVE_DATOS, JSON.stringify({clientes, servicios, citas}));
+            } catch (e) { console.warn('No se pudieron guardar los datos', e); }
+        }
+
+        // Deja los IDs de clientes como 1, 2, 3... respetando el orden actual y actualiza las citas
+        function reordenarIdsClientes() {
+            const nuevoIdDe = {};
+            let cambio = false;
+            clientes.sort((a, b) => a.id - b.id);
+            clientes.forEach((c, i) => {
+                nuevoIdDe[c.id] = i + 1;
+                if (c.id !== i + 1) cambio = true;
+            });
+            clientes.forEach((c, i) => { c.id = i + 1; });
+            citas.forEach(c => { if (nuevoIdDe[c.clienteId]) c.clienteId = nuevoIdDe[c.clienteId]; });
+            return cambio;
+        }
+        if (reordenarIdsClientes()) persistir();
+
         // Horarios disponibles
         const horariosDisponibles = [
             "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
@@ -1193,18 +1279,18 @@
         });
 
         function cargarDatos() {
-            recuperarDatos();
             cargarClientes();
             cargarServicios();
             cargarCitas();
             cargarCalendario();
             cargarCitasHoy();
+            llenarSelectores();
             actualizarEstadisticas();
         }
 
         function configurarFechaMinima() {
             const fechaInput = document.getElementById('fechaCita');
-            const hoy = new Date().toISOString().split('T')[0];
+            const hoy = fechaLocal();
             fechaInput.min = hoy;
             fechaInput.addEventListener('change', cargarHorariosDisponibles);
         }
@@ -1218,52 +1304,34 @@
         function cargarClientes() {
             const tbody = document.getElementById('clientesTable');
             tbody.innerHTML = '';
-
+            
             clientes.forEach(cliente => {
-                // Buscar todas las citas de este cliente
-                const citasCliente = citas.filter(cita =>
-                    Number(cita.clienteId) === Number(cliente.id)
-                );
-
-                // Ordenar de la más reciente a la más antigua
-                citasCliente.sort((a, b) => {
-                    const fechaA = `${a.fecha}T${a.hora}`;
-                    const fechaB = `${b.fecha}T${b.hora}`;
-                    return fechaB.localeCompare(fechaA);
-                });
-
-                // Actualizar la última cita encontrada
-                if (citasCliente.length > 0) {
-                    cliente.ultimaCita = citasCliente[0].fecha;
-                }
-
-                const ultimaCita = cliente.ultimaCita && cliente.ultimaCita !== '-'
-                    ? formatearFecha(cliente.ultimaCita)
-                    : 'Sin citas';
-
                 const row = `
                     <tr>
                         <td>${cliente.id}</td>
                         <td>${cliente.nombre}</td>
                         <td>${cliente.telefono}</td>
                         <td>${cliente.email}</td>
-                        <td>${ultimaCita}</td>
+                        <td>${cliente.ultimaCita}</td>
                         <td>
-                            <button class="btn btn-sm btn-outline-primary me-1"
-                                onclick="editarCliente(${cliente.id})">
+                            <span class="badge bg-success">Atendidas: ${cliente.atendidas || 0}</span>
+                            <span class="badge bg-danger">Canceladas: ${cliente.canceladas || 0}</span>
+                            ${citas.some(c => c.clienteId === cliente.id) ? '<span class="badge bg-info text-dark">Cita pendiente</span>' : ''}
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary me-1" onclick="editarCliente(${cliente.id})">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            <button class="btn btn-sm btn-outline-danger"
-                                onclick="eliminarCliente(${cliente.id})">
+                            <button class="btn btn-sm btn-outline-danger" onclick="eliminarCliente(${cliente.id})">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </td>
                     </tr>
                 `;
-
                 tbody.innerHTML += row;
             });
         }
+
         function cargarServicios() {
             const grid = document.getElementById('serviciosGrid');
             grid.innerHTML = '';
@@ -1295,75 +1363,37 @@
             });
         }
 
-        
-            function cargarCitas() {
-                const tbody = document.getElementById('citasTable');
-
-                if (!tbody) {
-                    console.error('No se encontró la tabla citasTable');
-                    return;
-                }
-
-                tbody.innerHTML = '';
-
-                const citasOrdenadas = [...citas].sort((a, b) => {
-                    const fechaA = `${a.fecha}T${a.hora}`;
-                    const fechaB = `${b.fecha}T${b.hora}`;
-
-                    return fechaB.localeCompare(fechaA);
-                });
-
-                citasOrdenadas.forEach(cita => {
-                    const cliente = clientes.find(c => c.id === cita.clienteId);
-                    const servicio = servicios.find(s => s.id === cita.servicioId);
-                    const estadoBadge = getEstadoBadge(cita.estado);
-
-                    const row = `
-                        <tr>
-                            <td>${formatearFecha(cita.fecha)}</td>
-                            <td>${cita.hora}</td>
-                            <td>${cliente ? cliente.nombre : 'Cliente no encontrado'}</td>
-                            <td>${servicio ? servicio.nombre : 'Servicio no encontrado'}</td>
-                            <td>${estadoBadge}</td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-primary me-1"
-                                    onclick="editarCita(${cita.id})">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="btn btn-sm btn-outline-danger"
-                                    onclick="cancelarCita(${cita.id})">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-
-                    tbody.innerHTML += row;
-                });
-            }
-        
-        function recuperarDatos() {
-            try {
-                const clientesGuardados = localStorage.getItem('pareli_clientes');
-                const citasGuardadas = localStorage.getItem('pareli_citas');
-
-                if (clientesGuardados) {
-                    clientes = JSON.parse(clientesGuardados);
-                }
-
-                if (citasGuardadas) {
-                    citas = JSON.parse(citasGuardadas);
-                }
-            } catch (error) {
-                console.error('Error al recuperar datos:', error);
-            }
+        function cargarCitas() {
+            const tbody = document.getElementById('citasTable');
+            tbody.innerHTML = '';
+            
+            const citasOrdenadas = citas.sort((a, b) => inicioCita(a) - inicioCita(b));
+            
+            citasOrdenadas.forEach(cita => {
+                const cliente = clientes.find(c => c.id === cita.clienteId);
+                const servicio = servicios.find(s => s.id === cita.servicioId);
+                const estadoBadge = getEstadoBadge(cita.estado);
+                
+                const row = `
+                    <tr>
+                        <td>${formatearFecha(cita.fecha)}</td>
+                        <td>${cita.hora}</td>
+                        <td>${cliente ? cliente.nombre : 'Cliente no encontrado'}</td>
+                        <td>${servicio ? servicio.nombre : 'Servicio no encontrado'}</td>
+                        <td>${estadoBadge}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary me-1" onclick="editarCita(${cita.id})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="cancelarCita(${cita.id})">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
         }
-
-        function guardarDatos() {
-            localStorage.setItem('pareli_clientes', JSON.stringify(clientes));
-            localStorage.setItem('pareli_citas', JSON.stringify(citas));
-        }
-    
 
         function cargarCalendario() {
             const calendar = document.getElementById('calendar');
@@ -1405,7 +1435,7 @@
 
         function cargarCitasHoy() {
             const citasHoyList = document.getElementById('citasHoyList');
-            const hoy = new Date().toISOString().split('T')[0];
+            const hoy = fechaLocal();
             const citasHoy = citas.filter(cita => cita.fecha === hoy);
             
             if (citasHoy.length === 0) {
@@ -1423,6 +1453,10 @@
                         <strong>${cita.hora}</strong><br>
                         <small>${cliente ? cliente.nombre : 'Cliente desconocido'}</small><br>
                         <small>${servicio ? servicio.nombre : 'Servicio desconocido'}</small>
+                        <div class="mt-1">
+                            <button class="btn btn-sm btn-light me-1" onclick="editarCita(${cita.id})" title="Editar"><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-sm btn-light" onclick="cancelarCita(${cita.id})" title="Eliminar"><i class="fas fa-trash"></i></button>
+                        </div>
                     </div>
                 `;
                 citasHoyList.innerHTML += citaBlock;
@@ -1430,44 +1464,43 @@
         }
 
         function llenarSelectores() {
+            // Llenar selector de clientes
             const clienteSelect = document.getElementById('clienteSelect');
-
-            if (clienteSelect) {
-                clienteSelect.innerHTML = '<option value="">Seleccionar cliente...</option>';
-
-                clientes.forEach(cliente => {
-                    clienteSelect.innerHTML +=
-                        `<option value="${cliente.id}">${cliente.nombre}</option>`;
-                });
-            }
-
+            clienteSelect.innerHTML = '<option value="">Seleccionar cliente...</option>';
+            clientes.forEach(cliente => {
+                clienteSelect.innerHTML += `<option value="${cliente.id}">${cliente.nombre}</option>`;
+            });
+            
             // Llenar selector de servicios
             const servicioSelect = document.getElementById('servicioSelect');
-
-            if (servicioSelect) {
-                servicioSelect.innerHTML = '<option value="">Seleccionar servicio...</option>';
-
-                servicios.forEach(servicio => {
-                    servicioSelect.innerHTML +=
-                        `<option value="${servicio.id}">${servicio.nombre} - S/. ${servicio.precio}</option>`;
-                });
-            }
+            servicioSelect.innerHTML = '<option value="">Seleccionar servicio...</option>';
+            servicios.forEach(servicio => {
+                servicioSelect.innerHTML += `<option value="${servicio.id}">${servicio.nombre} - S/. ${servicio.precio}</option>`;
+            });
         }
+
         function cargarHorariosDisponibles() {
             const fecha = document.getElementById('fechaCita').value;
             const horariosDiv = document.getElementById('horariosDisponibles');
+            document.getElementById('fechaCita').min = fechaLocal();
             
+            if (fecha && fecha < fechaLocal()) {
+                alert('No se pueden agendar citas en días anteriores a hoy.');
+                document.getElementById('fechaCita').value = '';
+                horariosDiv.innerHTML = '';
+                return;
+            }
             if (!fecha) {
                 horariosDiv.innerHTML = '';
                 return;
             }
             
-            const citasDelDia = citas.filter(cita => cita.fecha === fecha);
+            const citasDelDia = citas.filter(cita => cita.fecha === fecha && cita.id !== citaEditandoId);
             const horariosOcupados = citasDelDia.map(cita => cita.hora);
             
             horariosDiv.innerHTML = '';
             horariosDisponibles.forEach(hora => {
-                const isOcupado = horariosOcupados.includes(hora);
+                const isOcupado = horariosOcupados.includes(hora) || (fecha === fechaLocal() && hora <= horaLocal());
                 const timeSlot = document.createElement('span');
                 timeSlot.className = `time-slot ${isOcupado ? 'occupied' : ''}`;
                 timeSlot.textContent = hora;
@@ -1487,7 +1520,7 @@
         }
 
         function actualizarEstadisticas() {
-            const hoy = new Date().toISOString().split('T')[0];
+            const hoy = fechaLocal();
             const citasHoy = citas.filter(cita => cita.fecha === hoy).length;
             const totalClientes = clientes.length;
             
@@ -1495,7 +1528,7 @@
             const mesActual = new Date().getMonth();
             const añoActual = new Date().getFullYear();
             const citasMes = citas.filter(cita => {
-                const fechaCita = new Date(cita.fecha);
+                const fechaCita = new Date(cita.fecha + 'T00:00:00');
                 return fechaCita.getMonth() === mesActual && fechaCita.getFullYear() === añoActual;
             }).length;
             
@@ -1536,7 +1569,7 @@
                 return;
             }
             
-            const nuevoId = Math.max(...clientes.map(c => c.id)) + 1;
+            const nuevoId = Math.max(0, ...clientes.map(c => c.id)) + 1;
             const nuevoCliente = {
                 id: nuevoId,
                 nombre: nombre,
@@ -1545,8 +1578,12 @@
                 ultimaCita: '-'
             };
             
-            clientes.push(nuevoCliente);
-            guardarDatos();
+            if (clienteEditandoId) {
+                Object.assign(clientes.find(c => c.id === clienteEditandoId), {nombre, telefono, email});
+            } else {
+                clientes.push(nuevoCliente);
+            }
+            persistir();
             cargarClientes();
             llenarSelectores();
             
@@ -1554,7 +1591,7 @@
             document.getElementById('nuevoClienteForm').reset();
             bootstrap.Modal.getInstance(document.getElementById('nuevoClienteModal')).hide();
             
-            mostrarNotificacion('Cliente agregado exitosamente', 'success');
+            mostrarNotificacion(clienteEditandoId ? 'Cliente actualizado exitosamente' : 'Cliente agregado exitosamente', 'success');
         }
 
         function guardarServicio() {
@@ -1568,7 +1605,7 @@
                 return;
             }
             
-            const nuevoId = Math.max(...servicios.map(s => s.id)) + 1;
+            const nuevoId = Math.max(0, ...servicios.map(s => s.id)) + 1;
             const nuevoServicio = {
                 id: nuevoId,
                 nombre: nombre,
@@ -1577,7 +1614,12 @@
                 descripcion: descripcion
             };
             
-            servicios.push(nuevoServicio);
+            if (servicioEditandoId) {
+                Object.assign(servicios.find(x => x.id === servicioEditandoId), {nombre, duracion, precio, descripcion});
+            } else {
+                servicios.push(nuevoServicio);
+            }
+            persistir();
             cargarServicios();
             llenarSelectores();
             
@@ -1585,7 +1627,7 @@
             document.getElementById('nuevoServicioForm').reset();
             bootstrap.Modal.getInstance(document.getElementById('nuevoServicioModal')).hide();
             
-            mostrarNotificacion('Servicio agregado exitosamente', 'success');
+            mostrarNotificacion(servicioEditandoId ? 'Servicio actualizado exitosamente' : 'Servicio agregado exitosamente', 'success');
         }
 
         function guardarCita() {
@@ -1598,8 +1640,16 @@
                 alert('Por favor complete todos los campos obligatorios');
                 return;
             }
+            if (fecha < fechaLocal()) {
+                alert('No se pueden agendar citas en días anteriores a hoy.');
+                return;
+            }
+            if (fecha === fechaLocal() && selectedTimeSlot <= horaLocal()) {
+                alert('Esa hora ya pasó. Para hoy, elige una hora posterior a la actual.');
+                return;
+            }
             
-            const nuevoId = Math.max(...citas.map(c => c.id)) + 1;
+            const nuevoId = Math.max(0, ...citas.map(c => c.id)) + 1;
             const nuevaCita = {
                 id: nuevoId,
                 clienteId: clienteId,
@@ -1610,8 +1660,11 @@
                 observaciones: observaciones
             };
             
-            citas.push(nuevaCita);
-            guardarDatos();
+            if (citaEditandoId) {
+                Object.assign(citas.find(c => c.id === citaEditandoId), {clienteId, servicioId, fecha, hora: selectedTimeSlot, observaciones});
+            } else {
+                citas.push(nuevaCita);
+            }
             cargarCitas();
             cargarCalendario();
             cargarCitasHoy();
@@ -1630,50 +1683,80 @@
             selectedTimeSlot = null;
             bootstrap.Modal.getInstance(document.getElementById('nuevaCitaModal')).hide();
             
-            mostrarNotificacion('Cita agendada exitosamente', 'success');
+            persistir();
+            mostrarNotificacion(citaEditandoId ? 'Cita actualizada exitosamente' : 'Cita agendada exitosamente', 'success');
         }
 
         function eliminarCliente(id) {
-            if (confirm('¿Está seguro de eliminar este cliente?')) {
+            const n = citas.filter(c => c.clienteId === id).length;
+            if (confirm('¿Está seguro de eliminar este cliente?' + (n ? '\nTambién se eliminarán sus ' + n + ' cita(s) agendada(s).' : ''))) {
                 clientes = clientes.filter(c => c.id !== id);
+                citas = citas.filter(c => c.clienteId !== id);
+                reordenarIdsClientes();
+                cargarCitas(); cargarCalendario(); cargarCitasHoy(); actualizarEstadisticas();
                 cargarClientes();
                 llenarSelectores();
+                persistir();
                 mostrarNotificacion('Cliente eliminado exitosamente', 'success');
             }
         }
 
         function eliminarServicio(id) {
-            if (confirm('¿Está seguro de eliminar este servicio?')) {
+            const n = citas.filter(c => c.servicioId === id).length;
+            if (confirm('¿Está seguro de eliminar este servicio?' + (n ? '\nTambién se eliminarán las ' + n + ' cita(s) agendada(s) con este servicio.' : ''))) {
                 servicios = servicios.filter(s => s.id !== id);
+                citas = citas.filter(c => c.servicioId !== id);
+                cargarCitas(); cargarCalendario(); cargarCitasHoy(); actualizarEstadisticas();
                 cargarServicios();
                 llenarSelectores();
+                persistir();
                 mostrarNotificacion('Servicio eliminado exitosamente', 'success');
             }
         }
 
+        let citaPorEliminarId = null;
+        let reabrirDia = false;
+
         function cancelarCita(id) {
-            if (confirm('¿Está seguro de cancelar esta cita?')) {
-                const cita = citas.find(c => c.id === id);
-                if (cita) {
-                    cita.estado = 'cancelada';
-                }
-                cargarCitas();
-                cargarCalendario();
-                cargarCitasHoy();
-                mostrarNotificacion('Cita cancelada exitosamente', 'warning');
+            const c = citas.find(x => x.id === id);
+            if (!c) return;
+            citaPorEliminarId = id;
+            const cl = clientes.find(x => x.id === c.clienteId);
+            const sv = servicios.find(x => x.id === c.servicioId);
+            document.getElementById('textoEstadoCita').textContent =
+                (cl ? cl.nombre : 'Cliente') + ' — ' + (sv ? sv.nombre : 'Servicio') + ', ' + formatearFecha(c.fecha) + ' a las ' + c.hora;
+            const abrir = () => bootstrap.Modal.getOrCreateInstance(document.getElementById('estadoCitaModal')).show();
+            if (document.getElementById('diaModal').classList.contains('show')) {
+                reabrirDia = true;
+                despuesDeCerrarDia(abrir);
+            } else {
+                reabrirDia = false;
+                abrir();
             }
+        }
+
+        // resultado: 'atendida' | 'cancelada' | 'error' (agendada por error, no se registra)
+        function confirmarEliminarCita(resultado) {
+            const c = citas.find(x => x.id === citaPorEliminarId);
+            if (c) {
+                const cl = clientes.find(x => x.id === c.clienteId);
+                if (cl && resultado !== 'error') {
+                    if (resultado === 'atendida') { cl.atendidas = (cl.atendidas || 0) + 1; cl.ultimaCita = c.fecha; }
+                    else { cl.canceladas = (cl.canceladas || 0) + 1; }
+                }
+                citas = citas.filter(x => x.id !== c.id);
+                cargarClientes(); cargarCitas(); cargarCalendario(); cargarCitasHoy(); actualizarEstadisticas();
+                persistir();
+                mostrarNotificacion(resultado === 'atendida' ? 'Cita eliminada: cliente atendido' :
+                                    resultado === 'cancelada' ? 'Cita eliminada: cita cancelada' : 'Cita eliminada', 'warning');
+            }
+            citaPorEliminarId = null;
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('estadoCitaModal')).hide();
         }
 
         // Funciones de utilidad
         function formatearFecha(fecha) {
-            if (typeof fecha === 'string' &&
-                /^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
-
-                const [anio, mes, dia] = fecha.split('-');
-                return `${Number(dia)}/${Number(mes)}/${anio}`;
-            }
-
-            return new Date(fecha).toLocaleDateString('es-PE');
+            return new Date(/^\d{4}-\d{2}-\d{2}$/.test(fecha) ? fecha + 'T00:00:00' : fecha).toLocaleDateString('es-PE');
         }
 
         function getEstadoBadge(estado) {
@@ -1715,21 +1798,43 @@
             });
         }
 
+        let diaSeleccionado = null;
+
         function mostrarCitasDelDia(fecha) {
-            const citasDelDia = citas.filter(cita => cita.fecha === fecha);
-            if (citasDelDia.length === 0) {
-                alert('No hay citas programadas para esta fecha');
-                return;
-            }
-            
-            let mensaje = `Citas para ${formatearFecha(fecha)}:\n\n`;
-            citasDelDia.forEach(cita => {
-                const cliente = clientes.find(c => c.id === cita.clienteId);
-                const servicio = servicios.find(s => s.id === cita.servicioId);
-                mensaje += `${cita.hora} - ${cliente.nombre} - ${servicio.nombre}\n`;
+            diaSeleccionado = fecha;
+            const lista = citas.filter(c => c.fecha === fecha).sort((a, b) => a.hora.localeCompare(b.hora));
+            document.getElementById('tituloDiaModal').textContent = 'Citas del ' + formatearFecha(fecha + 'T00:00:00');
+            document.getElementById('listaDia').innerHTML = lista.length ? lista.map(c => {
+                const cl = clientes.find(x => x.id === c.clienteId);
+                const sv = servicios.find(x => x.id === c.servicioId);
+                return `<div class="d-flex justify-content-between align-items-center border rounded-3 p-2 mb-2">
+                    <div><strong>${c.hora}</strong> — ${cl ? cl.nombre : 'Cliente'}<br><small class="text-muted">${sv ? sv.nombre : 'Servicio'}</small></div>
+                    <div>
+                        <button class="btn btn-sm btn-outline-primary me-1" onclick="editarCitaDesdeDia(${c.id})" title="Editar"><i class="fas fa-edit"></i></button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="cancelarCita(${c.id})" title="Eliminar"><i class="fas fa-trash"></i></button>
+                    </div></div>`;
+            }).join('') : '<p class="text-muted mb-0">No hay citas este día.</p>';
+            const esPasado = fecha < fechaLocal();
+            const btn = document.getElementById('btnAgregarDia');
+            btn.disabled = esPasado;
+            btn.title = esPasado ? 'No se pueden agendar citas en días pasados' : '';
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('diaModal')).show();
+        }
+
+        function despuesDeCerrarDia(accion) {
+            const el = document.getElementById('diaModal');
+            el.addEventListener('hidden.bs.modal', accion, {once: true});
+            bootstrap.Modal.getOrCreateInstance(el).hide();
+        }
+        function editarCitaDesdeDia(id) { despuesDeCerrarDia(() => editarCita(id)); }
+        function agregarCitaEnDia() {
+            const fecha = diaSeleccionado;
+            despuesDeCerrarDia(() => {
+                llenarSelectores();
+                document.getElementById('fechaCita').value = fecha;
+                cargarHorariosDisponibles();
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('nuevaCitaModal')).show();
             });
-            
-            alert(mensaje);
         }
 
         // Funciones de reportes
@@ -2020,16 +2125,192 @@
 
         // Funciones de edición (placeholders)
         function editarCliente(id) {
-            mostrarNotificacion('Función de edición en desarrollo', 'warning');
+            const c = clientes.find(x => x.id === id);
+            if (!c) return;
+            clienteEditandoId = id;
+            document.getElementById('nombreCliente').value = c.nombre;
+            document.getElementById('telefonoCliente').value = c.telefono;
+            document.getElementById('emailCliente').value = c.email;
+            document.getElementById('tituloClienteModal').textContent = 'Editar Cliente';
+            document.getElementById('btnTextoCliente').textContent = 'Guardar cambios';
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('nuevoClienteModal')).show();
         }
 
         function editarServicio(id) {
-            mostrarNotificacion('Función de edición en desarrollo', 'warning');
+            const sv = servicios.find(x => x.id === id);
+            if (!sv) return;
+            servicioEditandoId = id;
+            document.getElementById('nombreServicio').value = sv.nombre;
+            document.getElementById('duracionServicio').value = sv.duracion;
+            document.getElementById('precioServicio').value = sv.precio;
+            document.getElementById('descripcionServicio').value = sv.descripcion || '';
+            document.getElementById('tituloServicioModal').textContent = 'Editar Servicio';
+            document.getElementById('btnTextoServicio').textContent = 'Guardar cambios';
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('nuevoServicioModal')).show();
         }
 
-        function editarCita(id) {
-            mostrarNotificacion('Función de edición en desarrollo', 'warning');
+        // Respaldo de datos
+        function exportarDatos() {
+            const blob = new Blob([JSON.stringify({clientes, servicios, citas}, null, 2)], {type: 'application/json'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'respaldo-pareli-' + new Date().toISOString().slice(0, 10) + '.json';
+            a.click();
+            URL.revokeObjectURL(a.href);
+            mostrarNotificacion('Respaldo descargado', 'success');
         }
+
+        function importarDatos(input) {
+            const archivo = input.files[0];
+            if (!archivo) return;
+            const lector = new FileReader();
+            lector.onload = () => {
+                try {
+                    const d = JSON.parse(lector.result);
+                    if (!Array.isArray(d.clientes) || !Array.isArray(d.servicios) || !Array.isArray(d.citas)) throw new Error('formato');
+                    if (!confirm('Se reemplazarán los datos actuales por los del respaldo. ¿Continuar?')) return;
+                    clientes = d.clientes; servicios = d.servicios; citas = d.citas;
+                    persistir();
+                    cargarDatos();
+                    llenarSelectores();
+                    actualizarEstadisticas();
+                    mostrarNotificacion('Datos restaurados exitosamente', 'success');
+                } catch (e) {
+                    alert('El archivo no es un respaldo válido de Pareli.');
+                }
+            };
+            lector.readAsText(archivo);
+            input.value = '';
+        }
+
+        // Limpiar formularios al cerrar los modales
+        document.addEventListener('DOMContentLoaded', function() {
+            [['Cliente', () => { clienteEditandoId = null; }, 'Guardar Cliente'],
+             ['Servicio', () => { servicioEditandoId = null; }, 'Guardar Servicio']].forEach(([n, limpiar, textoBtn]) => {
+                document.getElementById('nuevo' + n + 'Modal').addEventListener('hidden.bs.modal', () => {
+                    limpiar();
+                    document.getElementById('nuevo' + n + 'Form').reset();
+                    document.getElementById('titulo' + n + 'Modal').textContent = 'Nuevo ' + n;
+                    document.getElementById('btnTexto' + n).textContent = textoBtn;
+                });
+            });
+            actualizarEstadisticas();
+        });
+
+        function editarCita(id) {
+            const c = citas.find(x => x.id === id);
+            if (!c) return;
+            citaEditandoId = id;
+            llenarSelectores();
+            document.getElementById('clienteSelect').value = c.clienteId;
+            document.getElementById('servicioSelect').value = c.servicioId;
+            document.getElementById('fechaCita').value = c.fecha;
+            document.getElementById('observaciones').value = c.observaciones || '';
+            cargarHorariosDisponibles();
+            selectedTimeSlot = null;
+            const slot = [...document.querySelectorAll('#horariosDisponibles .time-slot')].find(x => x.textContent === c.hora);
+            if (slot) { slot.classList.remove('occupied'); slot.addEventListener('click', () => seleccionarHorario(slot, c.hora)); seleccionarHorario(slot, c.hora); }
+            document.getElementById('tituloCitaModal').textContent = 'Editar Cita';
+            document.getElementById('btnTextoCita').textContent = 'Guardar cambios';
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('nuevaCitaModal')).show();
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('estadoCitaModal').addEventListener('hidden.bs.modal', () => {
+                if (reabrirDia) { reabrirDia = false; mostrarCitasDelDia(diaSeleccionado); }
+            });
+            document.getElementById('nuevaCitaModal').addEventListener('hidden.bs.modal', () => {
+                citaEditandoId = null;
+                selectedTimeSlot = null;
+                document.getElementById('nuevaCitaForm').reset();
+                document.getElementById('horariosDisponibles').innerHTML = '';
+                document.getElementById('tituloCitaModal').textContent = 'Agendar Nueva Cita';
+                document.getElementById('btnTextoCita').textContent = 'Agendar Cita';
+            });
+        });
+
+        // ===== Citas: limpieza de pasadas y avisos de próximas =====
+        const AVISOS_MIN = [60, 15]; // minutos antes de la cita en que se avisa
+
+        function fechaLocal(d = new Date()) {
+            return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        }
+        function horaLocal(d = new Date()) {
+            return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+        }
+        function inicioCita(c) { return new Date(c.fecha + 'T' + c.hora + ':00'); }
+        function finCita(c) {
+            const sv = servicios.find(x => x.id === c.servicioId);
+            return new Date(inicioCita(c).getTime() + (sv ? sv.duracion : 60) * 60000);
+        }
+
+        // Elimina las citas cuyo horario ya terminó; las nuevas se conservan
+        function limpiarCitasPasadas() {
+            const ahora = new Date();
+            const antes = citas.length;
+            citas = citas.filter(c => {
+                if (finCita(c) > ahora) return true;
+                const cl = clientes.find(x => x.id === c.clienteId);
+                if (cl) cl.atendidas = (cl.atendidas || 0) + 1;
+                return false;
+            });
+            if (citas.length !== antes) cargarClientes();
+            if (citas.length !== antes) {
+                persistir();
+                cargarCitas(); cargarCalendario(); cargarCitasHoy(); actualizarEstadisticas();
+            }
+        }
+
+        function mostrarAviso(html) {
+            let cont = document.getElementById('contenedorAvisos');
+            if (!cont) {
+                cont = document.createElement('div');
+                cont.id = 'contenedorAvisos';
+                cont.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+                cont.style.zIndex = '9999';
+                document.body.appendChild(cont);
+            }
+            const t = document.createElement('div');
+            t.className = 'toast border-0 shadow';
+            t.setAttribute('role', 'alert');
+            t.innerHTML = '<div class="toast-header" style="background:var(--accent-color);color:var(--primary-color)">' +
+                '<i class="fas fa-bell me-2"></i><strong class="me-auto">Cita próxima</strong>' +
+                '<button type="button" class="btn-close" data-bs-dismiss="toast"></button></div>' +
+                '<div class="toast-body">' + html + '</div>';
+            cont.appendChild(t);
+            t.addEventListener('hidden.bs.toast', () => t.remove());
+            new bootstrap.Toast(t, {autohide: false}).show();
+        }
+
+        function revisarCitasProximas() {
+            const ahora = new Date();
+            let avisadas = [];
+            try { avisadas = JSON.parse(sessionStorage.getItem('pareli_avisadas') || '[]'); } catch (e) {}
+            citas.forEach(c => {
+                if (c.estado === 'cancelada') return;
+                const faltan = Math.ceil((inicioCita(c) - ahora) / 60000);
+                if (faltan < 0) return;
+                // el umbral más pequeño que ya se cumplió
+                const umbral = AVISOS_MIN.filter(u => faltan <= u).sort((a, b) => a - b)[0];
+                if (!umbral) return;
+                const clave = c.id + '|' + c.fecha + '|' + c.hora + '|' + umbral;
+                if (avisadas.includes(clave)) return;
+                avisadas.push(clave);
+                const cl = clientes.find(x => x.id === c.clienteId);
+                const sv = servicios.find(x => x.id === c.servicioId);
+                mostrarAviso('<strong>' + (cl ? cl.nombre : 'Cliente') + '</strong> — ' + (sv ? sv.nombre : 'Servicio') +
+                    '<br>' + (faltan === 0 ? 'Empieza ahora' : 'Empieza en ' + faltan + ' min') + ' (' + c.hora + ')');
+            });
+            try { sessionStorage.setItem('pareli_avisadas', JSON.stringify(avisadas)); } catch (e) {}
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            try { localStorage.setItem('_t', '1'); localStorage.removeItem('_t'); }
+            catch (e) { mostrarNotificacion('Este navegador no permite guardar datos: lo que registres se perderá al cerrar. Usa "Respaldar".', 'warning'); }
+            limpiarCitasPasadas();
+            revisarCitasProximas();
+            setInterval(() => { limpiarCitasPasadas(); revisarCitasProximas(); }, 30000);
+        });
     </script>
 </body>
 </html>
