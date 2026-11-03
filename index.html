@@ -1,0 +1,2035 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salón de Belleza Pareli - Gestión de Citas</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #e91e63;
+            --secondary-color: #f8bbd9;
+            --accent-color: #fce4ec;
+            --dark-color: #2c3e50;
+            --light-color: #f8f9fa;
+        }
+
+        body {
+            background-image:url("pink-background.jpg");
+            background-repeat: no-repeat;
+            background-size: cover;
+            background-position: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color), #c2185b) !important;
+            box-shadow: 0 2px 10px rgba(233, 30, 99, 0.3);
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), #c2185b);
+            border: none;
+            border-radius: 25px;
+            padding: 10px 25px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #c2185b, #ad1457);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(233, 30, 99, 0.4);
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-top: 20px;
+        }
+
+        .calendar-header {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .calendar-day-header {
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 8px;
+        }
+
+        .calendar-cell {
+            aspect-ratio: 1;
+            border: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            padding: 5px;
+            position: relative;
+            min-height: 80px;
+        }
+
+        .calendar-cell:hover {
+            background-color: var(--secondary-color);
+            transform: scale(1.05);
+        }
+
+        .calendar-cell.selected {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .calendar-cell.other-month {
+            color: #ccc;
+            background-color: #f8f9fa;
+        }
+
+        .calendar-cell.today {
+            background-color: var(--accent-color);
+            border: 2px solid var(--primary-color);
+            font-weight: bold;
+        }
+
+        .calendar-cell.has-appointments {
+            background-color: #e8f5e8;
+            border-color: #4caf50;
+        }
+
+        .calendar-day-number {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+
+        .cita-indicator {
+            width: 8px;
+            height: 8px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            margin: 1px;
+        }
+
+        .cita-block {
+            background: linear-gradient(135deg, var(--primary-color), #c2185b);
+            color: white;
+            padding: 8px;
+            margin: 2px 0;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .cita-block:hover {
+            background: linear-gradient(135deg, #c2185b, #ad1457);
+            transform: scale(1.02);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary-color), #c2185b);
+            color: white;
+            border-radius: 15px 15px 0 0;
+        }
+
+        .time-slot {
+            padding: 8px 15px;
+            margin: 5px;
+            border: 2px solid var(--secondary-color);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+        .time-slot:hover, .time-slot.selected {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .time-slot.occupied {
+            background-color: #ffcdd2;
+            border-color: #f44336;
+            color: #d32f2f;
+            cursor: not-allowed;
+        }
+
+        .stats-card {
+            background: linear-gradient(135deg, #4caf50, #388e3c);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stats-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .nav-pills .nav-link {
+            color: var(--primary-color);
+            border-radius: 25px;
+            margin: 0 5px;
+            transition: all 0.3s ease;
+        }
+
+        .prediction-card {
+            background: linear-gradient(135deg, var(--primary-color), #c2185b);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .prediction-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            transform: rotate(45deg);
+            transition: all 0.6s;
+        }
+
+        .prediction-card:hover::before {
+            animation: shine 0.6s ease-in-out;
+        }
+
+        @keyframes shine {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        .ai-indicator {
+            display: inline-block;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            background-size: 200% 200%;
+            animation: gradientShift 3s ease infinite;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: bold;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .metric-card-ia {
+            background: linear-gradient(135deg, rgba(233, 30, 99, 0.1), rgba(248, 187, 217, 0.1));
+            border: 2px solid var(--secondary-color);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .metric-card-ia:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 25px rgba(233, 30, 99, 0.2);
+        }
+
+        .recommendation-item {
+            background: linear-gradient(135deg, var(--secondary-color), #f093fb);
+            color: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .recommendation-item:hover {
+            transform: translateX(10px);
+            box-shadow: 0 5px 20px rgba(248, 187, 217, 0.4);
+        }
+
+        .trend-up {
+            color: var(--primary-color);
+        }
+
+        .trend-down {
+            color: #dc3545;
+        }
+
+        .smart-alert {
+            background: linear-gradient(135deg, var(--accent-color), rgba(248, 187, 217, 0.3));
+            border: none;
+            border-radius: 15px;
+            padding: 15px;
+            margin: 10px 0;
+            box-shadow: 0 3px 10px rgba(248, 187, 217, 0.2);
+        }
+
+        .neural-network {
+            background: linear-gradient(45deg, var(--primary-color), #c2185b);
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            box-shadow: 0 5px 15px rgba(233, 30, 99, 0.4);
+        }
+
+        .ai-processing {
+            display: inline-block;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .customer-segment {
+            padding: 8px 12px;
+            margin: 5px;
+            border-radius: 20px;
+            display: inline-block;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .segment-vip {
+            background: linear-gradient(135deg, var(--primary-color), #c2185b);
+            color: white;
+        }
+
+        .segment-regular {
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+            color: white;
+        }
+
+        .segment-new {
+            background: linear-gradient(135deg, #55a3ff, #667eea);
+            color: white;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-cut me-2"></i>
+                Salón de Belleza Pareli
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <span class="navbar-text">
+                            <i class="fas fa-user-circle me-1"></i>
+                            Administradora: Liz Sánchez
+                        </span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Tabs de navegación -->
+        <ul class="nav nav-pills nav-fill mb-4" id="pills-tab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="pills-dashboard-tab" data-bs-toggle="pill" data-bs-target="#pills-dashboard" type="button" role="tab">
+                    <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="pills-citas-tab" data-bs-toggle="pill" data-bs-target="#pills-citas" type="button" role="tab">
+                    <i class="fas fa-calendar-plus me-2"></i>Gestión de Citas
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="pills-clientes-tab" data-bs-toggle="pill" data-bs-target="#pills-clientes" type="button" role="tab">
+                    <i class="fas fa-users me-2"></i>Clientes
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="pills-servicios-tab" data-bs-toggle="pill" data-bs-target="#pills-servicios" type="button" role="tab">
+                    <i class="fas fa-spa me-2"></i>Servicios
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="pills-reportes-tab" data-bs-toggle="pill" data-bs-target="#pills-reportes" type="button" role="tab">
+                    <i class="fas fa-chart-bar me-2"></i>Reportes
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="pills-predicciones-tab" data-bs-toggle="pill" data-bs-target="#pills-predicciones" type="button" role="tab">
+                    <i class="fas fa-brain me-2"></i>Predicciones IA
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="pills-tabContent">
+            <!-- Dashboard -->
+            <div class="tab-pane fade show active" id="pills-dashboard" role="tabpanel">
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="stats-card">
+                            <div class="stats-number" id="citasHoy">8</div>
+                            <div>Citas Hoy</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stats-card" style="background: linear-gradient(135deg, #2196f3, #1976d2);">
+                            <div class="stats-number" id="clientesTotal">45</div>
+                            <div>Total Clientes</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stats-card" style="background: linear-gradient(135deg, #ff9800, #f57c00);">
+                            <div class="stats-number" id="citasMes">87</div>
+                            <div>Citas Este Mes</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stats-card" style="background: linear-gradient(135deg, #9c27b0, #7b1fa2);">
+                            <div class="stats-number">S/. 2,340</div>
+                            <div>Ingresos Mes</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-lg-8">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-calendar-alt me-2"></i>
+                                    Calendario de Citas - <span id="currentMonth"></span>
+                                </h5>
+                                <div>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="previousMonth()">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="nextMonth()">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="calendar-header">
+                                    <div class="calendar-day-header">Dom</div>
+                                    <div class="calendar-day-header">Lun</div>
+                                    <div class="calendar-day-header">Mar</div>
+                                    <div class="calendar-day-header">Mié</div>
+                                    <div class="calendar-day-header">Jue</div>
+                                    <div class="calendar-day-header">Vie</div>
+                                    <div class="calendar-day-header">Sáb</div>
+                                </div>
+                                <div class="calendar-grid" id="calendar"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-clock me-2"></i>
+                                    Citas de Hoy
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="citasHoyList"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gestión de Citas -->
+            <div class="tab-pane fade" id="pills-citas" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-calendar-plus me-2"></i>
+                                    Gestión de Citas
+                                </h5>
+                                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#nuevaCitaModal">
+                                    <i class="fas fa-plus me-2"></i>Agendar Cita
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>Fecha</th>
+                                                <th>Hora</th>
+                                                <th>Cliente</th>
+                                                <th>Servicio</th>
+                                                <th>Estado</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="citasTable">
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Clientes -->
+            <div class="tab-pane fade" id="pills-clientes" role="tabpanel">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-users me-2"></i>
+                            Gestión de Clientes
+                        </h5>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#nuevoClienteModal">
+                            <i class="fas fa-user-plus me-2"></i>Nuevo Cliente
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Nombre</th>
+                                        <th>Teléfono</th>
+                                        <th>Email</th>
+                                        <th>Última Cita</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="clientesTable">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Servicios -->
+            <div class="tab-pane fade" id="pills-servicios" role="tabpanel">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-spa me-2"></i>
+                            Catálogo de Servicios
+                        </h5>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#nuevoServicioModal">
+                            <i class="fas fa-plus me-2"></i>Nuevo Servicio
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="row" id="serviciosGrid">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reportes -->
+            <div class="tab-pane fade" id="pills-reportes" role="tabpanel">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-chart-bar me-2"></i>
+                            Reportes Mensuales
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <select class="form-select" id="reporteMes">
+                                    <option value="1">Enero 2025</option>
+                                    <option value="2">Febrero 2025</option>
+                                    <option value="3">Marzo 2025</option>
+                                    <option value="4">Abril 2025</option>
+                                    <option value="5">Mayo 2025</option>
+                                    <option value="6" selected>Junio 2025</option>
+                                    <option value="7">Julio 2025</option>
+                                    <option value="8">Agosto 2025</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <button class="btn btn-primary" onclick="generarReporte()">
+                                    <i class="fas fa-chart-line me-2"></i>Generar Reporte
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <div class="card text-center">
+                                    <div class="card-body">
+                                        <h3 class="text-success" id="citasAtendidas">67</h3>
+                                        <p class="text-muted">Citas Atendidas</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card text-center">
+                                    <div class="card-body">
+                                        <h3 class="text-danger" id="citasCanceladas">8</h3>
+                                        <p class="text-muted">Citas Canceladas</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card text-center">
+                                    <div class="card-body">
+                                        <h3 class="text-primary" id="ingresosMes">S/. 3,350</h3>
+                                        <p class="text-muted">Ingresos del Mes</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card text-center">
+                                    <div class="card-body">
+                                        <h3 class="text-warning" id="promedioDiario">S/. 167</h3>
+                                        <p class="text-muted">Promedio Diario</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="card-title">Servicios Más Solicitados</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container">
+                                            <canvas id="serviciosChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="card-title">Ingresos por Semana</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container">
+                                            <canvas id="ingresosChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Predicciones IA -->
+            <div class="tab-pane fade" id="pills-predicciones" role="tabpanel">
+                <!-- Header con predicción principal -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="prediction-card">
+                            <div class="neural-network">
+                                <i class="fas fa-brain fa-2x text-white"></i>
+                            </div>
+                            <h3 class="text-center mb-3">
+                                <span class="ai-indicator">🤖 IA PREDICTIVA</span>
+                                - Predicción de Demanda Semanal
+                            </h3>
+                            <div class="row text-center">
+                                <div class="col-md-4">
+                                    <h4><i class="fas fa-trending-up trend-up me-2"></i>+23%</h4>
+                                    <p>Incremento esperado próxima semana</p>
+                                </div>
+                                <div class="col-md-4">
+                                    <h4><i class="fas fa-calendar-day me-2"></i>Viernes</h4>
+                                    <p>Día de mayor demanda predicha</p>
+                                </div>
+                                <div class="col-md-4">
+                                    <h4><i class="fas fa-clock me-2"></i>14:00-16:00</h4>
+                                    <p>Franja horaria más solicitada</p>
+                                </div>
+                            </div>
+                            <div class="text-center mt-3">
+                                <span class="badge bg-light text-dark">Precisión del Modelo: 96.2%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Métricas de IA -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="metric-card-ia">
+                            <div class="stats-number trend-up">89%</div>
+                            <p class="mb-1">Precisión Predicciones</p>
+                            <small class="text-muted">Últimos 30 días</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card-ia">
+                            <div class="stats-number trend-up">15%</div>
+                            <p class="mb-1">Reducción No-Shows</p>
+                            <small class="text-muted">Con predicciones</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card-ia">
+                            <div class="stats-number" style="color: var(--primary-color);">4.8</div>
+                            <p class="mb-1">Satisfacción IA</p>
+                            <small class="text-muted">Promedio usuarias</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card-ia">
+                            <div class="stats-number" style="color: #4caf50;">32%</div>
+                            <p class="mb-1">Optimización Horarios</p>
+                            <small class="text-muted">Mejor aprovechamiento</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- Gráfico de Predicciones -->
+                    <div class="col-lg-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-chart-line me-2"></i>
+                                    Predicción de Demanda - Próximas 2 Semanas
+                                    <span class="badge bg-primary ms-2">IA Predictiva</span>
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="predictionChart"></canvas>
+                                </div>
+                                <div class="smart-alert mt-3" role="alert">
+                                    <i class="fas fa-lightbulb me-2"></i>
+                                    <strong>Insight IA:</strong> Se detecta un patrón de incremento del 18% los viernes por la tarde. 
+                                    Recomendación: Ampliar personal o extender horarios.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recomendaciones Personalizadas -->
+                    <div class="col-lg-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-magic me-2"></i>
+                                    Recomendaciones IA
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="recommendation-item">
+                                    <i class="fas fa-user-clock me-2"></i>
+                                    <strong>María González</strong><br>
+                                    <small>Probable reprogramación mañana. Confianza: 87%</small>
+                                </div>
+                                <div class="recommendation-item">
+                                    <i class="fas fa-spa me-2"></i>
+                                    <strong>Promover Tratamiento Capilar</strong><br>
+                                    <small>+340% demanda predicha en agosto</small>
+                                </div>
+                                <div class="recommendation-item">
+                                    <i class="fas fa-clock me-2"></i>
+                                    <strong>Optimizar Horario 11:00</strong><br>
+                                    <small>Slot subutilizado, mover promociones</small>
+                                </div>
+                                <div class="recommendation-item">
+                                    <i class="fas fa-gift me-2"></i>
+                                    <strong>Campaña Clientes VIP</strong><br>
+                                    <small>15 clientes inactivas, probabilidad retorno: 73%</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <!-- Análisis de Clientes -->
+                    <div class="col-lg-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-users-cog me-2"></i>
+                                    Segmentación Inteligente de Clientes
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <h6>Clientes por Comportamiento (IA)</h6>
+                                    <div class="customer-segment segment-vip">
+                                        <i class="fas fa-crown me-1"></i>VIP (12) - S/. 180/mes promedio
+                                    </div>
+                                    <div class="customer-segment segment-regular">
+                                        <i class="fas fa-heart me-1"></i>Regulares (28) - S/. 95/mes promedio
+                                    </div>
+                                    <div class="customer-segment segment-new">
+                                        <i class="fas fa-star me-1"></i>Nuevas (15) - 85% potencial crecimiento
+                                    </div>
+                                </div>
+                                
+                                <div class="chart-container">
+                                    <canvas id="clientSegmentChart"></canvas>
+                                </div>
+                                
+                                <div class="smart-alert mt-3">
+                                    <i class="fas fa-brain me-2"></i>
+                                    <strong>Predicción:</strong> 8 clientes "Nuevas" migrarán a "Regulares" en 30 días
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Predicción de Servicios -->
+                    <div class="col-lg-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-chart-pie me-2"></i>
+                                    Predicción de Servicios Populares
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span>Corte y Peinado</span>
+                                        <span class="badge bg-success">+12% <i class="fas fa-arrow-up"></i></span>
+                                    </div>
+                                    <div class="progress mb-3">
+                                        <div class="progress-bar" style="width: 85%; background: linear-gradient(135deg, var(--primary-color), #c2185b);"></div>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span>Manicure</span>
+                                        <span class="badge bg-warning">+5% <i class="fas fa-arrow-up"></i></span>
+                                    </div>
+                                    <div class="progress mb-3">
+                                        <div class="progress-bar" style="width: 68%; background: linear-gradient(135deg, #ffc107, #fd7e14);"></div>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span>Tratamiento Capilar</span>
+                                        <span class="badge bg-success">+28% <i class="fas fa-rocket"></i></span>
+                                    </div>
+                                    <div class="progress mb-3">
+                                        <div class="progress-bar" style="width: 45%; background: linear-gradient(135deg, var(--secondary-color), #f093fb);"></div>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span>Maquillaje</span>
+                                        <span class="badge bg-info">+8% <i class="fas fa-arrow-up"></i></span>
+                                    </div>
+                                    <div class="progress mb-3">
+                                        <div class="progress-bar" style="width: 32%; background: linear-gradient(135deg, #74b9ff, #0984e3);"></div>
+                                    </div>
+                                </div>
+
+                                <div class="smart-alert">
+                                    <i class="fas fa-trending-up me-2"></i>
+                                    <strong>Oportunidad:</strong> Tratamiento Capilar mostrará el mayor crecimiento este trimestre
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Alertas Inteligentes -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-bell me-2"></i>
+                                    Alertas Inteligentes del Sistema
+                                    <span class="badge bg-danger ms-2">3 Nuevas</span>
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="alert alert-warning">
+                                            <i class="fas fa-exclamation-triangle me-2"></i>
+                                            <strong>Riesgo No-Show</strong><br>
+                                            <small>Ana Rodríguez (mañana 10:00) - Probabilidad: 78%</small>
+                                            <br><button class="btn btn-sm btn-outline-warning mt-2" onclick="enviarRecordatorio()">Enviar Recordatorio</button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-lightbulb me-2"></i>
+                                            <strong>Oportunidad Cross-sell</strong><br>
+                                            <small>María González - Sugerir manicure con su cita</small>
+                                            <br><button class="btn btn-sm btn-outline-info mt-2" onclick="crearOferta()">Crear Oferta</button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="alert alert-success">
+                                            <i class="fas fa-calendar-plus me-2"></i>
+                                            <strong>Slot Óptimo Disponible</strong><br>
+                                            <small>Viernes 15:00 ideal para cliente VIP nueva</small>
+                                            <br><button class="btn btn-sm btn-outline-success mt-2" onclick="contactarCliente()">Contactar Cliente</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel de Control IA -->
+                <div class="row mt-4 mb-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-cogs me-2"></i>
+                                    Centro de Control de IA
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <button class="btn btn-primary w-100 mb-2" onclick="ejecutarPrediccion()">
+                                            <i class="fas fa-brain me-2"></i>Ejecutar Predicción
+                                        </button>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button class="btn btn-info w-100 mb-2" onclick="optimizarHorarios()">
+                                            <i class="fas fa-clock me-2"></i>Optimizar Horarios
+                                        </button>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button class="btn btn-success w-100 mb-2" onclick="analizarClientes()">
+                                            <i class="fas fa-users me-2"></i>Analizar Clientes
+                                        </button>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button class="btn btn-warning w-100 mb-2" onclick="generarInsights()">
+                                            <i class="fas fa-lightbulb me-2"></i>Generar Insights
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <div class="progress">
+                                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                             style="width: 0%; background: linear-gradient(135deg, var(--primary-color), #c2185b);" 
+                                             id="aiProgress"></div>
+                                    </div>
+                                    <small class="text-muted mt-2 d-block" id="aiStatus">Sistema IA listo para procesar datos</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modales -->
+    <!-- Modal Nueva Cita -->
+    <div class="modal fade" id="nuevaCitaModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-calendar-plus me-2"></i>
+                        Agendar Nueva Cita
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="nuevaCitaForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Cliente</label>
+                                    <select class="form-select" id="clienteSelect" required>
+                                        <option value="">Seleccionar cliente...</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Servicio</label>
+                                    <select class="form-select" id="servicioSelect" required>
+                                        <option value="">Seleccionar servicio...</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Fecha</label>
+                                    <input type="date" class="form-control" id="fechaCita" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Horarios Disponibles</label>
+                                    <div id="horariosDisponibles" class="mt-2">
+                                        <!-- Se llenarán dinámicamente -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Observaciones</label>
+                            <textarea class="form-control" id="observaciones" rows="2"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="guardarCita()">
+                        <i class="fas fa-save me-2"></i>Agendar Cita
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nuevo Cliente -->
+    <div class="modal fade" id="nuevoClienteModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-user-plus me-2"></i>
+                        Nuevo Cliente
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="nuevoClienteForm">
+                        <div class="mb-3">
+                            <label class="form-label">Nombre Completo</label>
+                            <input type="text" class="form-control" id="nombreCliente" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Teléfono</label>
+                            <input type="tel" class="form-control" id="telefonoCliente" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" id="emailCliente" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="guardarCliente()">
+                        <i class="fas fa-save me-2"></i>Guardar Cliente
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nuevo Servicio -->
+    <div class="modal fade" id="nuevoServicioModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-plus me-2"></i>
+                        Nuevo Servicio
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="nuevoServicioForm">
+                        <div class="mb-3">
+                            <label class="form-label">Nombre del Servicio</label>
+                            <input type="text" class="form-control" id="nombreServicio" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Duración (minutos)</label>
+                                    <input type="number" class="form-control" id="duracionServicio" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Precio (S/.)</label>
+                                    <input type="number" class="form-control" id="precioServicio" step="0.01" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Descripción</label>
+                            <textarea class="form-control" id="descripcionServicio" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="guardarServicio()">
+                        <i class="fas fa-save me-2"></i>Guardar Servicio
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script>
+        // Variables globales
+        let currentDate = new Date();
+        let currentMonth = currentDate.getMonth();
+        let currentYear = currentDate.getFullYear();
+        let selectedTimeSlot = null;
+        let predictionChart = null;
+        let serviciosChart = null;
+        let ingresosChart = null;
+        let clientSegmentChart = null;
+
+        // Datos simulados (en producción vendrían de la API)
+        let clientes = [
+            {id: 1, nombre: "María González", telefono: "987654321", email: "maria@email.com", ultimaCita: "2025-06-25"},
+            {id: 2, nombre: "Ana Rodríguez", telefono: "987654322", email: "ana@email.com", ultimaCita: "2025-06-28"},
+            {id: 3, nombre: "Carmen López", telefono: "987654323", email: "carmen@email.com", ultimaCita: "2025-06-29"},
+            {id: 4, nombre: "Rosa Martínez", telefono: "987654324", email: "rosa@email.com", ultimaCita: "2025-06-30"},
+            {id: 5, nombre: "Lucia Fernández", telefono: "987654325", email: "lucia@email.com", ultimaCita: "2025-07-02"},
+            {id: 6, nombre: "Patricia Silva", telefono: "987654326", email: "patricia@email.com", ultimaCita: "2025-07-01"}
+        ];
+
+        let servicios = [
+            {id: 1, nombre: "Corte y Peinado", duracion: 60, precio: 45.00, descripcion: "Corte personalizado y peinado profesional"},
+            {id: 2, nombre: "Manicure", duracion: 150, precio: 45.00, descripcion: "Manicure completo con esmaltado"},
+            {id: 3, nombre: "Pedicure", duracion: 60, precio: 35.00, descripcion: "Pedicure completo con esmaltado"},
+            {id: 4, nombre: "Tratamiento Capilar", duracion: 90, precio: 80.00, descripcion: "Tratamiento hidratante capilar profundo"},
+            {id: 5, nombre: "Maquillaje", duracion: 45, precio: 50.00, descripcion: "Maquillaje profesional para eventos"},
+            {id: 6, nombre: "Tinte de Cabello", duracion: 120, precio: 60.00, descripcion: "Coloración profesional del cabello"}
+        ];
+
+        let citas = [
+            {id: 1, clienteId: 1, servicioId: 1, fecha: "2025-08-03", hora: "09:00", estado: "confirmada", observaciones: ""},
+            {id: 2, clienteId: 2, servicioId: 2, fecha: "2025-08-03", hora: "10:30", estado: "confirmada", observaciones: ""},
+            {id: 3, clienteId: 3, servicioId: 3, fecha: "2025-08-03", hora: "14:00", estado: "confirmada", observaciones: ""},
+            {id: 4, clienteId: 4, servicioId: 1, fecha: "2025-08-04", hora: "09:00", estado: "confirmada", observaciones: ""},
+            {id: 5, clienteId: 5, servicioId: 4, fecha: "2025-08-04", hora: "11:00", estado: "confirmada", observaciones: ""},
+            {id: 6, clienteId: 6, servicioId: 5, fecha: "2025-08-05", hora: "15:00", estado: "confirmada", observaciones: ""},
+            {id: 7, clienteId: 1, servicioId: 2, fecha: "2025-08-06", hora: "10:00", estado: "confirmada", observaciones: ""},
+            {id: 8, clienteId: 3, servicioId: 6, fecha: "2025-08-07", hora: "13:00", estado: "confirmada", observaciones: ""}
+        ];
+
+        // Horarios disponibles
+        const horariosDisponibles = [
+            "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
+            "12:00", "12:30", "13:00", "13:30", "14:00", "14:30",
+            "15:00", "15:30", "16:00", "16:30", "17:00", "17:30"
+        ];
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            cargarDatos();
+            configurarFechaMinima();
+            actualizarMesActual();
+            inicializarGraficos();
+        });
+
+        function cargarDatos() {
+            recuperarDatos();
+            cargarClientes();
+            cargarServicios();
+            cargarCitas();
+            cargarCalendario();
+            cargarCitasHoy();
+            actualizarEstadisticas();
+        }
+
+        function configurarFechaMinima() {
+            const fechaInput = document.getElementById('fechaCita');
+            const hoy = new Date().toISOString().split('T')[0];
+            fechaInput.min = hoy;
+            fechaInput.addEventListener('change', cargarHorariosDisponibles);
+        }
+
+        function actualizarMesActual() {
+            const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
+                          'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            document.getElementById('currentMonth').textContent = `${meses[currentMonth]} ${currentYear}`;
+        }
+
+        function cargarClientes() {
+            const tbody = document.getElementById('clientesTable');
+            tbody.innerHTML = '';
+
+            clientes.forEach(cliente => {
+                // Buscar todas las citas de este cliente
+                const citasCliente = citas.filter(cita =>
+                    Number(cita.clienteId) === Number(cliente.id)
+                );
+
+                // Ordenar de la más reciente a la más antigua
+                citasCliente.sort((a, b) => {
+                    const fechaA = `${a.fecha}T${a.hora}`;
+                    const fechaB = `${b.fecha}T${b.hora}`;
+                    return fechaB.localeCompare(fechaA);
+                });
+
+                // Actualizar la última cita encontrada
+                if (citasCliente.length > 0) {
+                    cliente.ultimaCita = citasCliente[0].fecha;
+                }
+
+                const ultimaCita = cliente.ultimaCita && cliente.ultimaCita !== '-'
+                    ? formatearFecha(cliente.ultimaCita)
+                    : 'Sin citas';
+
+                const row = `
+                    <tr>
+                        <td>${cliente.id}</td>
+                        <td>${cliente.nombre}</td>
+                        <td>${cliente.telefono}</td>
+                        <td>${cliente.email}</td>
+                        <td>${ultimaCita}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary me-1"
+                                onclick="editarCliente(${cliente.id})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger"
+                                onclick="eliminarCliente(${cliente.id})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+
+                tbody.innerHTML += row;
+            });
+        }
+        function cargarServicios() {
+            const grid = document.getElementById('serviciosGrid');
+            grid.innerHTML = '';
+            
+            servicios.forEach(servicio => {
+                const card = `
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">${servicio.nombre}</h5>
+                                <p class="card-text">${servicio.descripcion}</p>
+                                <p class="text-muted">
+                                    <i class="fas fa-clock me-1"></i>${servicio.duracion} min | 
+                                    <i class="fas fa-dollar-sign me-1"></i>S/. ${servicio.precio}
+                                </p>
+                                <div class="btn-group" role="group">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="editarServicio(${servicio.id})">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="eliminarServicio(${servicio.id})">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                grid.innerHTML += card;
+            });
+        }
+
+        
+            function cargarCitas() {
+                const tbody = document.getElementById('citasTable');
+
+                if (!tbody) {
+                    console.error('No se encontró la tabla citasTable');
+                    return;
+                }
+
+                tbody.innerHTML = '';
+
+                const citasOrdenadas = [...citas].sort((a, b) => {
+                    const fechaA = `${a.fecha}T${a.hora}`;
+                    const fechaB = `${b.fecha}T${b.hora}`;
+
+                    return fechaB.localeCompare(fechaA);
+                });
+
+                citasOrdenadas.forEach(cita => {
+                    const cliente = clientes.find(c => c.id === cita.clienteId);
+                    const servicio = servicios.find(s => s.id === cita.servicioId);
+                    const estadoBadge = getEstadoBadge(cita.estado);
+
+                    const row = `
+                        <tr>
+                            <td>${formatearFecha(cita.fecha)}</td>
+                            <td>${cita.hora}</td>
+                            <td>${cliente ? cliente.nombre : 'Cliente no encontrado'}</td>
+                            <td>${servicio ? servicio.nombre : 'Servicio no encontrado'}</td>
+                            <td>${estadoBadge}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary me-1"
+                                    onclick="editarCita(${cita.id})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger"
+                                    onclick="cancelarCita(${cita.id})">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+
+                    tbody.innerHTML += row;
+                });
+            }
+        
+        function recuperarDatos() {
+            try {
+                const clientesGuardados = localStorage.getItem('pareli_clientes');
+                const citasGuardadas = localStorage.getItem('pareli_citas');
+
+                if (clientesGuardados) {
+                    clientes = JSON.parse(clientesGuardados);
+                }
+
+                if (citasGuardadas) {
+                    citas = JSON.parse(citasGuardadas);
+                }
+            } catch (error) {
+                console.error('Error al recuperar datos:', error);
+            }
+        }
+
+        function guardarDatos() {
+            localStorage.setItem('pareli_clientes', JSON.stringify(clientes));
+            localStorage.setItem('pareli_citas', JSON.stringify(citas));
+        }
+    
+
+        function cargarCalendario() {
+            const calendar = document.getElementById('calendar');
+            calendar.innerHTML = '';
+            
+            const firstDay = new Date(currentYear, currentMonth, 1);
+            const lastDay = new Date(currentYear, currentMonth + 1, 0);
+            const startDate = new Date(firstDay);
+            startDate.setDate(firstDay.getDate() - firstDay.getDay());
+            
+            const today = new Date();
+            
+            for (let i = 0; i < 42; i++) {
+                const cellDate = new Date(startDate);
+                cellDate.setDate(startDate.getDate() + i);
+                
+                const isCurrentMonth = cellDate.getMonth() === currentMonth;
+                const isToday = cellDate.toDateString() === today.toDateString();
+                const dateStr = cellDate.toISOString().split('T')[0];
+                
+                const citasDelDia = citas.filter(cita => cita.fecha === dateStr);
+                
+                let cellClass = 'calendar-cell';
+                if (!isCurrentMonth) cellClass += ' other-month';
+                if (isToday) cellClass += ' today';
+                if (citasDelDia.length > 0) cellClass += ' has-appointments';
+                
+                const cell = document.createElement('div');
+                cell.className = cellClass;
+                cell.innerHTML = `
+                    <div class="calendar-day-number">${cellDate.getDate()}</div>
+                    ${citasDelDia.map(() => '<div class="cita-indicator"></div>').join('')}
+                `;
+                
+                cell.addEventListener('click', () => mostrarCitasDelDia(dateStr));
+                calendar.appendChild(cell);
+            }
+        }
+
+        function cargarCitasHoy() {
+            const citasHoyList = document.getElementById('citasHoyList');
+            const hoy = new Date().toISOString().split('T')[0];
+            const citasHoy = citas.filter(cita => cita.fecha === hoy);
+            
+            if (citasHoy.length === 0) {
+                citasHoyList.innerHTML = '<p class="text-muted">No hay citas programadas para hoy</p>';
+                return;
+            }
+            
+            citasHoyList.innerHTML = '';
+            citasHoy.forEach(cita => {
+                const cliente = clientes.find(c => c.id === cita.clienteId);
+                const servicio = servicios.find(s => s.id === cita.servicioId);
+                
+                const citaBlock = `
+                    <div class="cita-block mb-2">
+                        <strong>${cita.hora}</strong><br>
+                        <small>${cliente ? cliente.nombre : 'Cliente desconocido'}</small><br>
+                        <small>${servicio ? servicio.nombre : 'Servicio desconocido'}</small>
+                    </div>
+                `;
+                citasHoyList.innerHTML += citaBlock;
+            });
+        }
+
+        function llenarSelectores() {
+            const clienteSelect = document.getElementById('clienteSelect');
+
+            if (clienteSelect) {
+                clienteSelect.innerHTML = '<option value="">Seleccionar cliente...</option>';
+
+                clientes.forEach(cliente => {
+                    clienteSelect.innerHTML +=
+                        `<option value="${cliente.id}">${cliente.nombre}</option>`;
+                });
+            }
+
+            // Llenar selector de servicios
+            const servicioSelect = document.getElementById('servicioSelect');
+
+            if (servicioSelect) {
+                servicioSelect.innerHTML = '<option value="">Seleccionar servicio...</option>';
+
+                servicios.forEach(servicio => {
+                    servicioSelect.innerHTML +=
+                        `<option value="${servicio.id}">${servicio.nombre} - S/. ${servicio.precio}</option>`;
+                });
+            }
+        }
+        function cargarHorariosDisponibles() {
+            const fecha = document.getElementById('fechaCita').value;
+            const horariosDiv = document.getElementById('horariosDisponibles');
+            
+            if (!fecha) {
+                horariosDiv.innerHTML = '';
+                return;
+            }
+            
+            const citasDelDia = citas.filter(cita => cita.fecha === fecha);
+            const horariosOcupados = citasDelDia.map(cita => cita.hora);
+            
+            horariosDiv.innerHTML = '';
+            horariosDisponibles.forEach(hora => {
+                const isOcupado = horariosOcupados.includes(hora);
+                const timeSlot = document.createElement('span');
+                timeSlot.className = `time-slot ${isOcupado ? 'occupied' : ''}`;
+                timeSlot.textContent = hora;
+                
+                if (!isOcupado) {
+                    timeSlot.addEventListener('click', () => seleccionarHorario(timeSlot, hora));
+                }
+                
+                horariosDiv.appendChild(timeSlot);
+            });
+        }
+
+        function seleccionarHorario(element, hora) {
+            document.querySelectorAll('.time-slot').forEach(slot => slot.classList.remove('selected'));
+            element.classList.add('selected');
+            selectedTimeSlot = hora;
+        }
+
+        function actualizarEstadisticas() {
+            const hoy = new Date().toISOString().split('T')[0];
+            const citasHoy = citas.filter(cita => cita.fecha === hoy).length;
+            const totalClientes = clientes.length;
+            
+            // Calcular citas del mes actual
+            const mesActual = new Date().getMonth();
+            const añoActual = new Date().getFullYear();
+            const citasMes = citas.filter(cita => {
+                const fechaCita = new Date(cita.fecha);
+                return fechaCita.getMonth() === mesActual && fechaCita.getFullYear() === añoActual;
+            }).length;
+            
+            document.getElementById('citasHoy').textContent = citasHoy;
+            document.getElementById('clientesTotal').textContent = totalClientes;
+            document.getElementById('citasMes').textContent = citasMes;
+        }
+
+        // Funciones de navegación del calendario
+        function previousMonth() {
+            currentMonth--;
+            if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+            }
+            actualizarMesActual();
+            cargarCalendario();
+        }
+
+        function nextMonth() {
+            currentMonth++;
+            if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+            }
+            actualizarMesActual();
+            cargarCalendario();
+        }
+
+        // Funciones CRUD
+        function guardarCliente() {
+            const nombre = document.getElementById('nombreCliente').value;
+            const telefono = document.getElementById('telefonoCliente').value;
+            const email = document.getElementById('emailCliente').value;
+            
+            if (!nombre || !telefono || !email) {
+                alert('Por favor complete todos los campos');
+                return;
+            }
+            
+            const nuevoId = Math.max(...clientes.map(c => c.id)) + 1;
+            const nuevoCliente = {
+                id: nuevoId,
+                nombre: nombre,
+                telefono: telefono,
+                email: email,
+                ultimaCita: '-'
+            };
+            
+            clientes.push(nuevoCliente);
+            guardarDatos();
+            cargarClientes();
+            llenarSelectores();
+            
+            // Limpiar formulario y cerrar modal
+            document.getElementById('nuevoClienteForm').reset();
+            bootstrap.Modal.getInstance(document.getElementById('nuevoClienteModal')).hide();
+            
+            mostrarNotificacion('Cliente agregado exitosamente', 'success');
+        }
+
+        function guardarServicio() {
+            const nombre = document.getElementById('nombreServicio').value;
+            const duracion = parseInt(document.getElementById('duracionServicio').value);
+            const precio = parseFloat(document.getElementById('precioServicio').value);
+            const descripcion = document.getElementById('descripcionServicio').value;
+            
+            if (!nombre || !duracion || !precio) {
+                alert('Por favor complete todos los campos obligatorios');
+                return;
+            }
+            
+            const nuevoId = Math.max(...servicios.map(s => s.id)) + 1;
+            const nuevoServicio = {
+                id: nuevoId,
+                nombre: nombre,
+                duracion: duracion,
+                precio: precio,
+                descripcion: descripcion
+            };
+            
+            servicios.push(nuevoServicio);
+            cargarServicios();
+            llenarSelectores();
+            
+            // Limpiar formulario y cerrar modal
+            document.getElementById('nuevoServicioForm').reset();
+            bootstrap.Modal.getInstance(document.getElementById('nuevoServicioModal')).hide();
+            
+            mostrarNotificacion('Servicio agregado exitosamente', 'success');
+        }
+
+        function guardarCita() {
+            const clienteId = parseInt(document.getElementById('clienteSelect').value);
+            const servicioId = parseInt(document.getElementById('servicioSelect').value);
+            const fecha = document.getElementById('fechaCita').value;
+            const observaciones = document.getElementById('observaciones').value;
+            
+            if (!clienteId || !servicioId || !fecha || !selectedTimeSlot) {
+                alert('Por favor complete todos los campos obligatorios');
+                return;
+            }
+            
+            const nuevoId = Math.max(...citas.map(c => c.id)) + 1;
+            const nuevaCita = {
+                id: nuevoId,
+                clienteId: clienteId,
+                servicioId: servicioId,
+                fecha: fecha,
+                hora: selectedTimeSlot,
+                estado: 'confirmada',
+                observaciones: observaciones
+            };
+            
+            citas.push(nuevaCita);
+            guardarDatos();
+            cargarCitas();
+            cargarCalendario();
+            cargarCitasHoy();
+            actualizarEstadisticas();
+            
+            // Actualizar última cita del cliente
+            const cliente = clientes.find(c => c.id === clienteId);
+            if (cliente) {
+                cliente.ultimaCita = fecha;
+                cargarClientes();
+            }
+            
+            // Limpiar formulario y cerrar modal
+            document.getElementById('nuevaCitaForm').reset();
+            document.getElementById('horariosDisponibles').innerHTML = '';
+            selectedTimeSlot = null;
+            bootstrap.Modal.getInstance(document.getElementById('nuevaCitaModal')).hide();
+            
+            mostrarNotificacion('Cita agendada exitosamente', 'success');
+        }
+
+        function eliminarCliente(id) {
+            if (confirm('¿Está seguro de eliminar este cliente?')) {
+                clientes = clientes.filter(c => c.id !== id);
+                cargarClientes();
+                llenarSelectores();
+                mostrarNotificacion('Cliente eliminado exitosamente', 'success');
+            }
+        }
+
+        function eliminarServicio(id) {
+            if (confirm('¿Está seguro de eliminar este servicio?')) {
+                servicios = servicios.filter(s => s.id !== id);
+                cargarServicios();
+                llenarSelectores();
+                mostrarNotificacion('Servicio eliminado exitosamente', 'success');
+            }
+        }
+
+        function cancelarCita(id) {
+            if (confirm('¿Está seguro de cancelar esta cita?')) {
+                const cita = citas.find(c => c.id === id);
+                if (cita) {
+                    cita.estado = 'cancelada';
+                }
+                cargarCitas();
+                cargarCalendario();
+                cargarCitasHoy();
+                mostrarNotificacion('Cita cancelada exitosamente', 'warning');
+            }
+        }
+
+        // Funciones de utilidad
+        function formatearFecha(fecha) {
+            if (typeof fecha === 'string' &&
+                /^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+
+                const [anio, mes, dia] = fecha.split('-');
+                return `${Number(dia)}/${Number(mes)}/${anio}`;
+            }
+
+            return new Date(fecha).toLocaleDateString('es-PE');
+        }
+
+        function getEstadoBadge(estado) {
+            const badges = {
+                'confirmada': '<span class="badge bg-success">Confirmada</span>',
+                'cancelada': '<span class="badge bg-danger">Cancelada</span>',
+                'completada': '<span class="badge bg-primary">Completada</span>',
+                'pendiente': '<span class="badge bg-warning">Pendiente</span>'
+            };
+            return badges[estado] || '<span class="badge bg-secondary">Desconocido</span>';
+        }
+
+        function mostrarNotificacion(mensaje, tipo) {
+            // Crear notificación temporal (toast)
+            const toastHtml = `
+                <div class="toast align-items-center text-white bg-${tipo === 'success' ? 'success' : tipo === 'warning' ? 'warning' : 'danger'} border-0" role="alert">
+                    <div class="d-flex">
+                        <div class="toast-body">${mensaje}</div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+            `;
+            
+            // Agregar toast al final del body temporalmente
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = toastHtml;
+            tempDiv.style.position = 'fixed';
+            tempDiv.style.top = '20px';
+            tempDiv.style.right = '20px';
+            tempDiv.style.zIndex = '9999';
+            document.body.appendChild(tempDiv);
+            
+            const toast = new bootstrap.Toast(tempDiv.querySelector('.toast'));
+            toast.show();
+            
+            // Remover después de que se oculte
+            tempDiv.querySelector('.toast').addEventListener('hidden.bs.toast', () => {
+                document.body.removeChild(tempDiv);
+            });
+        }
+
+        function mostrarCitasDelDia(fecha) {
+            const citasDelDia = citas.filter(cita => cita.fecha === fecha);
+            if (citasDelDia.length === 0) {
+                alert('No hay citas programadas para esta fecha');
+                return;
+            }
+            
+            let mensaje = `Citas para ${formatearFecha(fecha)}:\n\n`;
+            citasDelDia.forEach(cita => {
+                const cliente = clientes.find(c => c.id === cita.clienteId);
+                const servicio = servicios.find(s => s.id === cita.servicioId);
+                mensaje += `${cita.hora} - ${cliente.nombre} - ${servicio.nombre}\n`;
+            });
+            
+            alert(mensaje);
+        }
+
+        // Funciones de reportes
+        function generarReporte() {
+            const mes = document.getElementById('reporteMes').value;
+            
+            // Simular datos del reporte
+            const datosReporte = {
+                citasAtendidas: Math.floor(Math.random() * 50) + 50,
+                citasCanceladas: Math.floor(Math.random() * 15) + 5,
+                ingresosMes: Math.floor(Math.random() * 2000) + 3000,
+                promedioDiario: 0
+            };
+            
+            datosReporte.promedioDiario = Math.floor(datosReporte.ingresosMes / 30);
+            
+            document.getElementById('citasAtendidas').textContent = datosReporte.citasAtendidas;
+            document.getElementById('citasCanceladas').textContent = datosReporte.citasCanceladas;
+            document.getElementById('ingresosMes').textContent = `S/. ${datosReporte.ingresosMes.toLocaleString()}`;
+            document.getElementById('promedioDiario').textContent = `S/. ${datosReporte.promedioDiario}`;
+            
+            actualizarGraficosReportes();
+            mostrarNotificacion('Reporte generado exitosamente', 'success');
+        }
+
+        // Funciones de gráficos
+        function inicializarGraficos() {
+            inicializarGraficoPredictivo();
+            inicializarGraficoServicios();
+            inicializarGraficoIngresos();
+            inicializarGraficoSegmentacion();
+        }
+
+        function inicializarGraficoPredictivo() {
+            const ctx = document.getElementById('predictionChart').getContext('2d');
+            
+            const labels = [];
+            const datos = [];
+            const predicciones = [];
+            
+            // Generar datos para las próximas 2 semanas
+            const hoy = new Date();
+            for (let i = 0; i < 14; i++) {
+                const fecha = new Date(hoy);
+                fecha.setDate(hoy.getDate() + i);
+                labels.push(fecha.toLocaleDateString('es-PE', { month: 'short', day: 'numeric' }));
+                
+                // Datos históricos (primeros 7 días) y predicciones (siguientes 7)
+                if (i < 7) {
+                    datos.push(Math.floor(Math.random() * 12) + 3);
+                    predicciones.push(null);
+                } else {
+                    datos.push(null);
+                    predicciones.push(Math.floor(Math.random() * 15) + 5);
+                }
+            }
+            
+            predictionChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Citas Reales',
+                        data: datos,
+                        borderColor: '#e91e63',
+                        backgroundColor: 'rgba(233, 30, 99, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: 'Predicción IA',
+                        data: predicciones,
+                        borderColor: '#4ecdc4',
+                        backgroundColor: 'rgba(78, 205, 196, 0.1)',
+                        borderDash: [5, 5],
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Predicción de Demanda - IA'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Número de Citas'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function inicializarGraficoServicios() {
+            const ctx = document.getElementById('serviciosChart').getContext('2d');
+            
+            serviciosChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Corte y Peinado', 'Manicure', 'Tratamiento Capilar', 'Maquillaje', 'Pedicure'],
+                    datasets: [{
+                        data: [35, 25, 20, 12, 8],
+                        backgroundColor: [
+                            '#e91e63',
+                            '#f8bbd9',
+                            '#4caf50',
+                            '#ff9800',
+                            '#2196f3'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        function inicializarGraficoIngresos() {
+            const ctx = document.getElementById('ingresosChart').getContext('2d');
+            
+            ingresosChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Semana 1', 'Semana 2', 'Semana 3', 'Semana 4'],
+                    datasets: [{
+                        label: 'Ingresos (S/.)',
+                        data: [850, 920, 780, 950],
+                        backgroundColor: '#e91e63',
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Ingresos (S/.)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function inicializarGraficoSegmentacion() {
+            const ctx = document.getElementById('clientSegmentChart').getContext('2d');
+            
+            clientSegmentChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: ['VIP', 'Regulares', 'Nuevas'],
+                    datasets: [{
+                        data: [12, 28, 15],
+                        backgroundColor: [
+                            '#e91e63',
+                            '#74b9ff',
+                            '#55a3ff'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        function actualizarGraficosReportes() {
+            // Actualizar gráficos con nuevos datos simulados
+            if (serviciosChart) {
+                serviciosChart.data.datasets[0].data = [
+                    Math.floor(Math.random() * 20) + 25,
+                    Math.floor(Math.random() * 15) + 20,
+                    Math.floor(Math.random() * 10) + 15,
+                    Math.floor(Math.random() * 8) + 10,
+                    Math.floor(Math.random() * 5) + 8
+                ];
+                serviciosChart.update();
+            }
+            
+            if (ingresosChart) {
+                ingresosChart.data.datasets[0].data = [
+                    Math.floor(Math.random() * 300) + 700,
+                    Math.floor(Math.random() * 300) + 700,
+                    Math.floor(Math.random() * 300) + 700,
+                    Math.floor(Math.random() * 300) + 700
+                ];
+                ingresosChart.update();
+            }
+        }
+
+        // Funciones de IA
+        function ejecutarPrediccion() {
+            mostrarProcesoIA('Ejecutando modelo predictivo...', () => {
+                mostrarNotificacion('Predicción ejecutada exitosamente', 'success');
+                if (predictionChart) {
+                    // Actualizar datos de predicción
+                    const nuevasPredicciones = [];
+                    for (let i = 0; i < 7; i++) {
+                        nuevasPredicciones.push(Math.floor(Math.random() * 15) + 5);
+                    }
+                    predictionChart.data.datasets[1].data = [null, null, null, null, null, null, null, ...nuevasPredicciones];
+                    predictionChart.update();
+                }
+            });
+        }
+
+        function optimizarHorarios() {
+            mostrarProcesoIA('Optimizando horarios con IA...', () => {
+                mostrarNotificacion('Horarios optimizados exitosamente', 'success');
+            });
+        }
+
+        function analizarClientes() {
+            mostrarProcesoIA('Analizando comportamiento de clientes...', () => {
+                mostrarNotificacion('Análisis de clientes completado', 'success');
+                if (clientSegmentChart) {
+                    clientSegmentChart.data.datasets[0].data = [
+                        Math.floor(Math.random() * 5) + 10,
+                        Math.floor(Math.random() * 10) + 25,
+                        Math.floor(Math.random() * 8) + 12
+                    ];
+                    clientSegmentChart.update();
+                }
+            });
+        }
+
+        function generarInsights() {
+            mostrarProcesoIA('Generando insights inteligentes...', () => {
+                mostrarNotificacion('Insights generados exitosamente', 'success');
+            });
+        }
+
+        function mostrarProcesoIA(mensaje, callback) {
+            const progressBar = document.getElementById('aiProgress');
+            const statusText = document.getElementById('aiStatus');
+            
+            statusText.textContent = mensaje;
+            progressBar.style.width = '0%';
+            
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 30;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        progressBar.style.width = '0%';
+                        statusText.textContent = 'Sistema IA listo para procesar datos';
+                        callback();
+                    }, 500);
+                }
+                progressBar.style.width = progress + '%';
+            }, 100);
+        }
+
+        // Funciones de alertas IA
+        function enviarRecordatorio() {
+            mostrarNotificacion('Recordatorio enviado exitosamente', 'success');
+        }
+
+        function crearOferta() {
+            mostrarNotificacion('Oferta personalizada creada', 'success');
+        }
+
+        function contactarCliente() {
+            mostrarNotificacion('Cliente contactado exitosamente', 'success');
+        }
+
+        // Funciones de edición (placeholders)
+        function editarCliente(id) {
+            mostrarNotificacion('Función de edición en desarrollo', 'warning');
+        }
+
+        function editarServicio(id) {
+            mostrarNotificacion('Función de edición en desarrollo', 'warning');
+        }
+
+        function editarCita(id) {
+            mostrarNotificacion('Función de edición en desarrollo', 'warning');
+        }
+    </script>
+</body>
+</html>
